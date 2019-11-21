@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/andrzejd-pl/git-crawler/csv"
 	"github.com/andrzejd-pl/git-crawler/html"
 	"github.com/andrzejd-pl/git-crawler/repositories"
 	"github.com/andrzejd-pl/git-crawler/usage"
+	"gopkg.in/src-d/go-billy.v4/memfs"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
+	"gopkg.in/src-d/go-git.v4/storage/memory"
 	"os"
 	"strconv"
 	"sync"
@@ -27,7 +31,7 @@ func main() {
 	sites, err := csv.ReadSites(sitesFile)
 	usage.CheckErrorWithPanic(logger, err)
 
-	publicKey, err := repositories.NewPublicKey("", "", "")
+	publicKey, err := ssh.NewPublicKeysFromFile("git", defaultKeyPath, "")
 	usage.CheckError(os.Stdout, err, true)
 
 	var wg sync.WaitGroup
@@ -40,17 +44,17 @@ func main() {
 		go func(id, url string) {
 			defer wg.Done()
 			pathToRepo := pathToMainDir + "/" + id
+			repo := repositories.NewGitRepository(url, publicKey, false)
+			storage := memory.NewStorage()
+			fileSystem := memfs.New()
 
 			fileToLog, err := os.Create("./logs/" + id + ".log")
 			usage.CheckErrorWithOnlyLogging(logger, err)
-
-			repositoryHandler := repositories.NewRepositoryHandler(publicKey, url, pathToRepo, fileToLog)
-			err = repositoryHandler.DownloadRepository()
+			err = repo.Download(storage, fileSystem, fileToLog)
 			usage.CheckErrorWithOnlyLogging(logger, err)
 
 			err = replace(pathToRepo + "/" + standardPath)
 			usage.CheckErrorWithOnlyLogging(logger, err)
-
 		}(siteId, urlRepo)
 
 		if i%maxThreads == 0 {
@@ -64,6 +68,7 @@ func main() {
 
 func replace(filePath string) error {
 	tempFileName := filePath + ".temp"
+	replacer := html.NewReplacer(patternOldLink, newLinkValue)
 
 	sourceFile, err := os.Open(filePath)
 	defer sourceFile.Close()
@@ -79,7 +84,7 @@ func replace(filePath string) error {
 		return err
 	}
 
-	err = html.Replace(sourceFile, targetFile)
+	err = replacer.Replace(bufio.NewScanner(sourceFile), bufio.NewWriter(targetFile))
 
 	if err != nil {
 		return err

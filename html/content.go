@@ -2,38 +2,46 @@ package html
 
 import (
 	"bufio"
-	"io"
 	"regexp"
 )
 
-const (
-	patternOldLink string = "(created-hld__link.*href\\=\\\").*(\\\")"
-	newLinkValue   string = "$1{{ __('cms.created_by') }}$2"
-)
+type Replacer interface {
+	Replace(*bufio.Scanner, *bufio.Writer) error
+}
 
-func Replace(sourceFile io.Reader, destinedFile io.Writer) error {
-	scanner := bufio.NewScanner(sourceFile)
-	writer := bufio.NewWriter(destinedFile)
-	regexEngine := regexp.MustCompile(patternOldLink)
+type replacer struct {
+	searchPattern  string
+	replacePattern string
+}
 
-	for scanner.Scan() {
-		text := scanner.Text()
+func NewReplacer(search, replace string) Replacer {
+	return replacer{
+		searchPattern:  search,
+		replacePattern: replace,
+	}
+}
+
+func (r replacer) Replace(source *bufio.Scanner, target *bufio.Writer) error {
+	regexEngine := regexp.MustCompile(r.searchPattern)
+
+	for source.Scan() {
+		text := source.Text()
 		var err error
 
 		if regexEngine.MatchString(text) {
-			_, err = writer.WriteString(regexEngine.ReplaceAllString(text, newLinkValue) + "\n")
+			_, err = target.WriteString(regexEngine.ReplaceAllString(text, r.replacePattern) + "\n")
 		} else {
-			_, err = writer.WriteString(text + "\n")
+			_, err = target.WriteString(text + "\n")
 		}
 
 		if err != nil {
 			return err
 		}
 
-		if err := writer.Flush(); err != nil {
+		if err := target.Flush(); err != nil {
 			return err
 		}
 	}
 
-	return scanner.Err()
+	return source.Err()
 }

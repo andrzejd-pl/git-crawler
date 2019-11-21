@@ -1,65 +1,41 @@
 package repositories
 
 import (
+	"gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
+	"gopkg.in/src-d/go-git.v4/storage"
+	"io"
 )
 
-const (
-	isBare             bool   = false
-	defaultGitUser     string = "git"
-	defaultKeyPassword string = ""
-	defaultKeyPath     string = "/Users/andrzejdybowski/.ssh/id_rsa"
-)
-
-type RepositoryHandler struct {
-	publicKey  *ssh.PublicKeys
-	url        string
-	path       string
-	logger     sideband.Progress
-	repository *git.Repository
+type Repository interface {
+	Download(storage.Storer, billy.Filesystem, io.Writer) error
 }
 
-func NewRepositoryHandler(publicKey *ssh.PublicKeys, url string, path string, logger sideband.Progress) RepositoryHandler {
-	return RepositoryHandler{
-		publicKey: publicKey,
-		url:       url,
-		path:      path,
-		logger:    logger,
+type gitRepository struct {
+	url     string
+	key     *ssh.PublicKeys
+	isBare  bool
+	pointer *git.Repository
+}
+
+func NewGitRepository(url string, key *ssh.PublicKeys, bare bool) Repository {
+	return gitRepository{
+		url:     url,
+		key:     key,
+		isBare:  bare,
+		pointer: nil,
 	}
 }
 
-func NewPublicKey(keyFile, user, password string) (*ssh.PublicKeys, error) {
-	if user == "" {
-		user = defaultGitUser
-	}
-
-	if password == "" {
-		password = defaultKeyPassword
-	}
-
-	if keyFile == "" {
-		keyFile = defaultKeyPath
-	}
-
-	return ssh.NewPublicKeysFromFile(user, keyFile, password)
-}
-
-func (r RepositoryHandler) DownloadRepository() error {
-	repository, err := git.PlainClone(
-		r.path,
-		isBare,
+func (r gitRepository) Download(target storage.Storer, fs billy.Filesystem, logger io.Writer) error {
+	repository, err := git.Clone(target, fs,
 		&git.CloneOptions{
 			URL:      r.url,
-			Auth:     r.publicKey,
-			Progress: r.logger,
+			Auth:     r.key,
+			Progress: logger,
 		})
+	r.pointer = repository
 
-	if err != nil {
-		return err
-	}
-
-	r.repository = repository
-	return nil
+	return err
 }
