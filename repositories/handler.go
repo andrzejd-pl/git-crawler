@@ -3,14 +3,20 @@ package repositories
 import (
 	"gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"gopkg.in/src-d/go-git.v4/storage"
 	"io"
+	"time"
 )
 
 type Repository interface {
 	Download(storage.Storer, billy.Filesystem, io.Writer) error
 	GetStatus() (git.Status, error)
+	CommitAllChanges(string, string, string) error
+	CheckoutBranch(string) error
+	PushChanges() error
 }
 
 type gitRepository struct {
@@ -18,6 +24,41 @@ type gitRepository struct {
 	key     *ssh.PublicKeys
 	isBare  bool
 	pointer *git.Repository
+}
+
+func (r *gitRepository) CheckoutBranch(branchName string) error {
+	workTree, err := r.pointer.Worktree()
+
+	if err != nil {
+		return err
+	}
+
+	return workTree.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.ReferenceName(branchName),
+	})
+}
+
+func (r *gitRepository) PushChanges() error {
+	return r.pointer.Push(&git.PushOptions{})
+}
+
+func (r *gitRepository) CommitAllChanges(commitMessage, authorName, authorEmail string) error {
+	workTree, err := r.pointer.Worktree()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = workTree.Commit(commitMessage, &git.CommitOptions{
+		All: true,
+		Author: &object.Signature{
+			Name:  authorName,
+			Email: authorEmail,
+			When:  time.Now(),
+		},
+	})
+
+	return err
 }
 
 func (r *gitRepository) GetStatus() (git.Status, error) {
