@@ -16,7 +16,7 @@ type Repository interface {
 	GetStatus() (git.Status, error)
 	CommitAllChanges(string, string, string) error
 	CheckoutBranch(string) error
-	PushChanges() error
+	PushChanges(io.Writer) error
 }
 
 type gitRepository struct {
@@ -35,18 +35,38 @@ func (r *gitRepository) CheckoutBranch(branchName string) error {
 
 	return workTree.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.ReferenceName(branchName),
+		Create: true,
 	})
 }
 
-func (r *gitRepository) PushChanges() error {
-	return r.pointer.Push(&git.PushOptions{})
+func (r *gitRepository) PushChanges(logger io.Writer) error {
+	return r.pointer.Push(&git.PushOptions{
+		Progress: logger,
+	})
 }
 
 func (r *gitRepository) CommitAllChanges(commitMessage, authorName, authorEmail string) error {
 	workTree, err := r.pointer.Worktree()
+	var hashes []plumbing.Hash
 
 	if err != nil {
 		return err
+	}
+
+	status, err := r.GetStatus()
+
+	if err != nil {
+		return err
+	}
+
+	for fileName, _ := range status {
+		hash, err := workTree.Add(fileName)
+
+		if err != nil {
+			return err
+		}
+
+		hashes = append(hashes, hash)
 	}
 
 	_, err = workTree.Commit(commitMessage, &git.CommitOptions{
