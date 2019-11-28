@@ -3,6 +3,7 @@ package repositories
 import (
 	"gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/config"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
@@ -16,7 +17,7 @@ type Repository interface {
 	GetStatus() (git.Status, error)
 	CommitAllChanges(string, string, string) error
 	CheckoutBranch(string) error
-	PushChanges(io.Writer) error
+	PushChanges(io.Writer, plumbing.ReferenceName) error
 }
 
 type gitRepository struct {
@@ -39,9 +40,13 @@ func (r *gitRepository) CheckoutBranch(branchName string) error {
 	})
 }
 
-func (r *gitRepository) PushChanges(logger io.Writer) error {
+func (r *gitRepository) PushChanges(logger io.Writer, branchName plumbing.ReferenceName) error {
 	return r.pointer.Push(&git.PushOptions{
-		Progress: logger,
+		RemoteName: "origin",
+		Progress:   logger,
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(branchName + ":" + branchName),
+		},
 	})
 }
 
