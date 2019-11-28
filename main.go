@@ -20,7 +20,7 @@ import (
 func main() {
 	logger := os.Stderr
 	maxThreads, err := strconv.Atoi(os.Args[2])
-	usage.CheckErrorWithPanic(os.Stderr, err)
+	usage.CheckErrorWithPanic(logger, err)
 
 	sitesFile, err := os.Open(os.Args[3])
 	usage.CheckErrorWithPanic(logger, err)
@@ -29,7 +29,7 @@ func main() {
 	usage.CheckErrorWithPanic(logger, err)
 
 	publicKey, err := ssh.NewPublicKeysFromFile("git", defaultKeyPath, "")
-	usage.CheckError(os.Stdout, err, true)
+	usage.CheckError(logger, err, true)
 
 	var wg sync.WaitGroup
 	threadsNumber := 0
@@ -40,14 +40,15 @@ func main() {
 
 		go func(id, url string) {
 			defer wg.Done()
+			fileError, err := os.Create("./logs/" + id + "-error.log")
 
-			fileToLog, err := os.Create("./logs/" + id + ".log")
-			usage.CheckErrorWithOnlyLogging(fileToLog, err)
+			fileToLog, err := os.Create("./logs/" + id + "-git.log")
+			usage.CheckErrorWithOnlyLogging(fileError, err)
 			err = thread(repositories.NewGitRepository(url, publicKey, false), fileToLog)
-			usage.CheckErrorWithOnlyLogging(fileToLog, err)
+			usage.CheckErrorWithOnlyLogging(fileError, err)
 
 			if err == nil {
-				_, _ = fileToLog.WriteString(id + ": ok")
+				_, _ = fileError.WriteString(id + ": ok")
 			}
 		}(siteId, urlRepo)
 
