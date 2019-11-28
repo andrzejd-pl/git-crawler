@@ -2,12 +2,14 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/andrzejd-pl/git-crawler/csv"
 	"github.com/andrzejd-pl/git-crawler/html"
 	"github.com/andrzejd-pl/git-crawler/repositories"
 	"github.com/andrzejd-pl/git-crawler/usage"
+	"gopkg.in/src-d/go-billy.v4"
 	"gopkg.in/src-d/go-billy.v4/memfs"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 	"os"
@@ -15,13 +17,8 @@ import (
 	"sync"
 )
 
-const (
-	standardPath string = "app/views/parts/site-footer.blade.php"
-)
-
 func main() {
 	logger := os.Stderr
-	pathToMainDir := os.Args[1]
 	maxThreads, err := strconv.Atoi(os.Args[2])
 	usage.CheckErrorWithPanic(os.Stderr, err)
 
@@ -35,56 +32,106 @@ func main() {
 	usage.CheckError(os.Stdout, err, true)
 
 	var wg sync.WaitGroup
-	i := 0
+	threadsNumber := 0
 
 	for siteId, urlRepo := range sites {
 		wg.Add(1)
-		i++
+		threadsNumber++
 
 		go func(id, url string) {
 			defer wg.Done()
-			pathToRepo := pathToMainDir + "/" + id
-			repo := repositories.NewGitRepository(url, publicKey, false)
-			storage := memory.NewStorage()
-			fileSystem := memfs.New()
 
 			fileToLog, err := os.Create("./logs/" + id + ".log")
-			usage.CheckErrorWithOnlyLogging(logger, err)
-			err = repo.Download(storage, fileSystem, fileToLog)
-			usage.CheckErrorWithOnlyLogging(logger, err)
+			usage.CheckErrorWithOnlyLogging(fileToLog, err)
+			err = thread(repositories.NewGitRepository(url, publicKey, false), fileToLog)
+			usage.CheckErrorWithOnlyLogging(fileToLog, err)
 
-			err = replace(pathToRepo + "/" + standardPath)
-			usage.CheckErrorWithOnlyLogging(logger, err)
+			if err == nil {
+				_, _ = fileToLog.WriteString(id + ": ok")
+			}
 		}(siteId, urlRepo)
 
-		if i%maxThreads == 0 {
+		if threadsNumber%maxThreads == 0 {
+			_, _ = logger.WriteString("wait")
 			wg.Wait()
 		}
 	}
 
 	wg.Wait()
-	fmt.Println("ok")
+	_, _ = logger.WriteString("ok")
 }
 
-func replace(filePath string) error {
-	tempFileName := filePath + ".temp"
+func thread(repo repositories.Repository, logFile *os.File) error {
+	storage := memory.NewStorage()
+	fileSystem := memfs.New()
+	err := repo.Download(storage, fileSystem, logFile)
+
+	if err != nil {
+		return err
+	}
+
+	err = repo.CheckoutBranch(newBranch)
+
+	if err != nil {
+		return err
+	}
+
+	fileName := standardPath
+	tempFileName := fileName + tempExtension
+	source, target, err := openFileWithCreatingTempFile(fileName, fileSystem)
+
+	if err != nil {
+		return err
+	}
+
+	defer source.Close()
+	defer target.Close()
+
+	err = replaceAndCloseFiles(source, target)
+
+	if err != nil {
+		return err
+	}
+
+	err = fileSystem.Rename(tempFileName, fileName)
+
+	if err != nil {
+		return err
+	}
+
+	err = repo.CommitAllChanges(commitMessage, authorName, authorEmail)
+
+	if err != nil {
+		return err
+	}
+	err = repo.PushChanges(os.Stdout, plumbing.ReferenceName(newBranch))
+
+	if err == git.NoErrAlreadyUpToDate {
+
+	}
+
+	return err
+}
+
+func openFileWithCreatingTempFile(name string, fileSystem billy.Filesystem) (billy.File, billy.File, error) {
+	source, err := fileSystem.Open(name)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	target, err := fileSystem.Create(name + tempExtension)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return source, target, nil
+}
+
+func replaceAndCloseFiles(sourceFile billy.File, targetFile billy.File) error {
 	replacer := html.NewReplacer(patternOldLink, newLinkValue)
-
-	sourceFile, err := os.Open(filePath)
-	defer sourceFile.Close()
-
-	if err != nil {
-		return err
-	}
-
-	targetFile, err := os.Create(tempFileName)
-	defer targetFile.Close()
-
-	if err != nil {
-		return err
-	}
-
-	err = replacer.Replace(bufio.NewScanner(sourceFile), bufio.NewWriter(targetFile))
+	err := replacer.Replace(bufio.NewScanner(sourceFile), bufio.NewWriter(targetFile))
 
 	if err != nil {
 		return err
@@ -95,17 +142,6 @@ func replace(filePath string) error {
 	if err != nil {
 		return err
 	}
-	err = targetFile.Close()
 
-	if err != nil {
-		return err
-	}
-
-	err = os.Rename(tempFileName, filePath)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return targetFile.Close()
 }
