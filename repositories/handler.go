@@ -97,15 +97,6 @@ func (r *gitRepository) GetStatus() (git.Status, error) {
 	return status, nil
 }
 
-func NewGitRepository(url string, key *ssh.PublicKeys, bare bool) Repository {
-	return &gitRepository{
-		url:     url,
-		key:     key,
-		isBare:  bare,
-		pointer: nil,
-	}
-}
-
 func (r *gitRepository) Download(target storage.Storer, fs billy.Filesystem, logger io.Writer) error {
 	repository, err := git.Clone(target, fs,
 		&git.CloneOptions{
@@ -116,4 +107,13 @@ func (r *gitRepository) Download(target storage.Storer, fs billy.Filesystem, log
 	r.pointer = repository
 
 	return err
+}
+
+func NewGitRepository(url string, key *ssh.PublicKeys, bare bool) Repository {
+	return &gitRepository{
+		url:     url,
+		key:     key,
+		isBare:  bare,
+		pointer: nil,
+	}
 }
