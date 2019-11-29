@@ -1,7 +1,7 @@
 package usage
 
 import (
-	"github.com/ghodss/yaml"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 )
