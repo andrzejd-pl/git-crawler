@@ -7,28 +7,28 @@ import (
 )
 
 type Configuration struct {
-	defaultKeyPath   string
-	standardFilePath string
-	searchPattern    string
-	replacePattern   string
-	tempExtension    string
-	newBranch        string
-	commitMessage    string
-	authorName       string
-	authorEmail      string
+	DefaultKeyPath   string
+	StandardFilePath string
+	SearchPattern    string
+	ReplacePattern   string
+	TempExtension    string
+	NewBranch        string
+	CommitMessage    string
+	AuthorName       string
+	AuthorEmail      string
 }
 
 func NewConfiguration(source io.Reader) (*Configuration, error) {
 	var yamlConfig struct {
 		DefaultKeyPath   string `yaml:"keyPath"`
 		StandardFilePath string `yaml:"fileToReplace"`
-		SearchPattern    string `yaml:"searchPattern"`
-		ReplacePattern   string `yaml:"replacePattern"`
+		SearchPattern    string `yaml:"SearchPattern"`
+		ReplacePattern   string `yaml:"ReplacePattern"`
 		TempExtension    string `yaml:"temporaryExtension"`
 		NewBranch        string `yaml:"newBranchName"`
-		CommitMessage    string `yaml:"commitMessage"`
-		AuthorName       string `yaml:"authorName"`
-		AuthorEmail      string `yaml:"authorEmail"`
+		CommitMessage    string `yaml:"CommitMessage"`
+		AuthorName       string `yaml:"AuthorName"`
+		AuthorEmail      string `yaml:"AuthorEmail"`
 	}
 
 	yamlData, err := ioutil.ReadAll(source)
@@ -44,14 +44,14 @@ func NewConfiguration(source io.Reader) (*Configuration, error) {
 	}
 
 	return &Configuration{
-		defaultKeyPath:   yamlConfig.DefaultKeyPath,
-		standardFilePath: yamlConfig.StandardFilePath,
-		searchPattern:    yamlConfig.SearchPattern,
-		replacePattern:   yamlConfig.ReplacePattern,
-		tempExtension:    yamlConfig.TempExtension,
-		newBranch:        yamlConfig.NewBranch,
-		commitMessage:    yamlConfig.CommitMessage,
-		authorName:       yamlConfig.AuthorName,
-		authorEmail:      yamlConfig.AuthorEmail,
+		DefaultKeyPath:   yamlConfig.DefaultKeyPath,
+		StandardFilePath: yamlConfig.StandardFilePath,
+		SearchPattern:    yamlConfig.SearchPattern,
+		ReplacePattern:   yamlConfig.ReplacePattern,
+		TempExtension:    yamlConfig.TempExtension,
+		NewBranch:        yamlConfig.NewBranch,
+		CommitMessage:    yamlConfig.CommitMessage,
+		AuthorName:       yamlConfig.AuthorName,
+		AuthorEmail:      yamlConfig.AuthorEmail,
 	}, nil
 }

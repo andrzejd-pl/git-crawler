@@ -13,37 +13,37 @@ func TestNewConfiguration(t *testing.T) {
 		{
 			"",
 			Configuration{
-				standardFilePath: "",
-				defaultKeyPath:   "",
-				searchPattern:    "",
-				replacePattern:   "",
-				tempExtension:    "",
-				newBranch:        "",
-				commitMessage:    "",
-				authorName:       "",
-				authorEmail:      "",
+				StandardFilePath: "",
+				DefaultKeyPath:   "",
+				SearchPattern:    "",
+				ReplacePattern:   "",
+				TempExtension:    "",
+				NewBranch:        "",
+				CommitMessage:    "",
+				AuthorName:       "",
+				AuthorEmail:      "",
 			},
 		},
 		{
 			"keyPath: ./.ssh/id_rsa\n" +
 				"fileToReplace: html/footer.go\n" +
-				"searchPattern: (www)?\\.?wp\\.pl\n" +
-				"replacePattern: onet.pl\n" +
+				"SearchPattern: (www)?\\.?wp\\.pl\n" +
+				"ReplacePattern: onet.pl\n" +
 				"temporaryExtension: .xd\n" +
 				"newBranchName: feature/tests\n" +
-				"commitMessage: \"test(test): test\"\n" +
-				"authorName: Jan Kowalski\n" +
-				"authorEmail: jan@kowalski.pl\n",
+				"CommitMessage: \"test(test): test\"\n" +
+				"AuthorName: Jan Kowalski\n" +
+				"AuthorEmail: jan@kowalski.pl\n",
 			Configuration{
-				standardFilePath: "html/footer.go",
-				defaultKeyPath:   "./.ssh/id_rsa",
-				searchPattern:    "(www)?\\.?wp\\.pl",
-				replacePattern:   "onet.pl",
-				tempExtension:    ".xd",
-				newBranch:        "feature/tests",
-				commitMessage:    "test(test): test",
-				authorName:       "Jan Kowalski",
-				authorEmail:      "jan@kowalski.pl",
+				StandardFilePath: "html/footer.go",
+				DefaultKeyPath:   "./.ssh/id_rsa",
+				SearchPattern:    "(www)?\\.?wp\\.pl",
+				ReplacePattern:   "onet.pl",
+				TempExtension:    ".xd",
+				NewBranch:        "feature/tests",
+				CommitMessage:    "test(test): test",
+				AuthorName:       "Jan Kowalski",
+				AuthorEmail:      "jan@kowalski.pl",
 			},
 		},
 	}
