@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"errors"
+	"flag"
 	"github.com/andrzejd-pl/git-crawler/csv"
 	"github.com/andrzejd-pl/git-crawler/html"
 	"github.com/andrzejd-pl/git-crawler/repositories"
@@ -17,8 +19,22 @@ import (
 	"sync"
 )
 
+var configuration *usage.Configuration
+
 func main() {
 	logger := os.Stderr
+	var fileName string
+	flag.StringVar(&fileName, "C", "", "Configuration YAML file.")
+	flag.Parse()
+
+	if fileName == "" {
+		usage.CheckErrorWithPanic(logger, errors.New("please provide configuration yaml file by using -C option"))
+	}
+
+	configurationFile, err := os.Open(fileName)
+
+	configuration, err := usage.NewConfiguration(configurationFile)
+
 	maxThreads, err := strconv.Atoi(os.Args[2])
 	usage.CheckErrorWithPanic(logger, err)
 
@@ -28,7 +44,7 @@ func main() {
 	sites, err := csv.ReadSites(sitesFile)
 	usage.CheckErrorWithPanic(logger, err)
 
-	publicKey, err := ssh.NewPublicKeysFromFile("git", defaultKeyPath, "")
+	publicKey, err := ssh.NewPublicKeysFromFile("git", configuration.DefaultKeyPath, "")
 	usage.CheckError(logger, err, true)
 
 	var wg sync.WaitGroup
@@ -71,14 +87,14 @@ func thread(repo repositories.Repository, logFile *os.File) error {
 		return err
 	}
 
-	err = repo.CheckoutBranch(newBranch)
+	err = repo.CheckoutBranch(configuration.NewBranch)
 
 	if err != nil {
 		return err
 	}
 
-	fileName := standardPath
-	tempFileName := fileName + tempExtension
+	fileName := configuration.StandardFilePath
+	tempFileName := fileName + configuration.TempExtension
 	source, target, err := openFileWithCreatingTempFile(fileName, fileSystem)
 
 	if err != nil {
@@ -100,12 +116,12 @@ func thread(repo repositories.Repository, logFile *os.File) error {
 		return err
 	}
 
-	err = repo.CommitAllChanges(commitMessage, authorName, authorEmail)
+	err = repo.CommitAllChanges(configuration.CommitMessage, configuration.AuthorName, configuration.AuthorEmail)
 
 	if err != nil {
 		return err
 	}
-	err = repo.PushChanges(os.Stdout, plumbing.ReferenceName(newBranch))
+	err = repo.PushChanges(os.Stdout, plumbing.ReferenceName(configuration.NewBranch))
 
 	if err == git.NoErrAlreadyUpToDate {
 
@@ -121,7 +137,7 @@ func openFileWithCreatingTempFile(name string, fileSystem billy.Filesystem) (bil
 		return nil, nil, err
 	}
 
-	target, err := fileSystem.Create(name + tempExtension)
+	target, err := fileSystem.Create(name + configuration.TempExtension)
 
 	if err != nil {
 		return nil, nil, err
@@ -131,7 +147,7 @@ func openFileWithCreatingTempFile(name string, fileSystem billy.Filesystem) (bil
 }
 
 func replaceAndCloseFiles(sourceFile billy.File, targetFile billy.File) error {
-	replacer := html.NewReplacer(patternOldLink, newLinkValue)
+	replacer := html.NewReplacer(configuration.SearchPattern, configuration.ReplacePattern)
 	err := replacer.Replace(bufio.NewScanner(sourceFile), bufio.NewWriter(targetFile))
 
 	if err != nil {
