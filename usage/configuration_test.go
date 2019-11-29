@@ -1,14 +1,27 @@
 package usage
 
 import (
-	"github.com/andrzejd-pl/git-crawler/html"
 	"strings"
 	"testing"
 )
 
 func TestNewConfiguration(t *testing.T) {
 	got := ""
-	want :=
+	want := Configuration{
+		standardFilePath: "",
+		defaultKeyPath:   "",
+		searchPattern:    "",
+		replacePattern:   "",
+		tempExtension:    "",
+		newBranch:        "",
+		commitMessage:    "",
+		authorName:       "",
+		authorEmail:      "",
+	}
 
-	//configuration := NewConfiguraion(strings.NewReader(data))
+	configuration := NewConfiguraion(strings.NewReader(got))
+
+	if configuration != want {
+		t.Errorf("got %g want %g", configuration, want)
+	}
 }
