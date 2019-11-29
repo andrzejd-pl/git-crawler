@@ -19,9 +19,9 @@ func TestNewConfiguration(t *testing.T) {
 		authorEmail:      "",
 	}
 
-	configuration := NewConfiguraion(strings.NewReader(got))
+	configuration := NewConfiguration(strings.NewReader(got))
 
-	if configuration != want {
+	if *configuration != want {
 		t.Errorf("got %g want %g", configuration, want)
 	}
 }
