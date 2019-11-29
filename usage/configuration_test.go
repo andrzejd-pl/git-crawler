@@ -27,13 +27,13 @@ func TestNewConfiguration(t *testing.T) {
 		{
 			"keyPath: ./.ssh/id_rsa\n" +
 				"fileToReplace: html/footer.go\n" +
-				"SearchPattern: (www)?\\.?wp\\.pl\n" +
-				"ReplacePattern: onet.pl\n" +
+				"searchPattern: (www)?\\.?wp\\.pl\n" +
+				"replacePattern: onet.pl\n" +
 				"temporaryExtension: .xd\n" +
 				"newBranchName: feature/tests\n" +
-				"CommitMessage: \"test(test): test\"\n" +
-				"AuthorName: Jan Kowalski\n" +
-				"AuthorEmail: jan@kowalski.pl\n",
+				"commitMessage: \"test(test): test\"\n" +
+				"authorName: Jan Kowalski\n" +
+				"authorEmail: jan@kowalski.pl\n",
 			Configuration{
 				StandardFilePath: "html/footer.go",
 				DefaultKeyPath:   "./.ssh/id_rsa",

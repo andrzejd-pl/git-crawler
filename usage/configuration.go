@@ -22,13 +22,13 @@ func NewConfiguration(source io.Reader) (*Configuration, error) {
 	var yamlConfig struct {
 		DefaultKeyPath   string `yaml:"keyPath"`
 		StandardFilePath string `yaml:"fileToReplace"`
-		SearchPattern    string `yaml:"SearchPattern"`
-		ReplacePattern   string `yaml:"ReplacePattern"`
+		SearchPattern    string `yaml:"searchPattern"`
+		ReplacePattern   string `yaml:"replacePattern"`
 		TempExtension    string `yaml:"temporaryExtension"`
 		NewBranch        string `yaml:"newBranchName"`
-		CommitMessage    string `yaml:"CommitMessage"`
-		AuthorName       string `yaml:"AuthorName"`
-		AuthorEmail      string `yaml:"AuthorEmail"`
+		CommitMessage    string `yaml:"commitMessage"`
+		AuthorName       string `yaml:"authorName"`
+		AuthorEmail      string `yaml:"authorEmail"`
 	}
 
 	yamlData, err := ioutil.ReadAll(source)
