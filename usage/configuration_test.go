@@ -22,6 +22,6 @@ func TestNewConfiguration(t *testing.T) {
 	configuration := NewConfiguration(strings.NewReader(got))
 
 	if *configuration != want {
-		t.Errorf("got %g want %g", configuration, want)
+		t.Errorf("got %v want %v", configuration, want)
 	}
 }
