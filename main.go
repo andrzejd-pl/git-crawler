@@ -48,23 +48,24 @@ func main() {
 			usage.CheckErrorWithOnlyLogging(fileError, err)
 
 			if err == nil {
-				_, _ = fileError.WriteString(id + ": ok")
+				_, _ = fileError.WriteString(id + ": ok\n")
 			}
 		}(siteId, urlRepo)
 
 		if threadsNumber%maxThreads == 0 {
-			_, _ = logger.WriteString("wait")
+			_, _ = logger.WriteString("wait\n")
 			wg.Wait()
 		}
 	}
 
 	wg.Wait()
-	_, _ = logger.WriteString("ok")
+	_, _ = logger.WriteString("ok\n")
 }
 
 func thread(repo repositories.Repository, logFile *os.File) error {
 	storage := memory.NewStorage()
 	fileSystem := memfs.New()
+	defer fileSystem.Remove(".")
 	err := repo.Download(storage, fileSystem, logFile)
 
 	if err != nil {
