@@ -22,6 +22,8 @@ func TestNewConfiguration(t *testing.T) {
 				CommitMessage:    "",
 				AuthorName:       "",
 				AuthorEmail:      "",
+				MaxThreads:       0,
+				RepositoriesFile: "",
 			},
 		},
 		{
@@ -33,7 +35,9 @@ func TestNewConfiguration(t *testing.T) {
 				"newBranchName: feature/tests\n" +
 				"commitMessage: \"test(test): test\"\n" +
 				"authorName: Jan Kowalski\n" +
-				"authorEmail: jan@kowalski.pl\n",
+				"authorEmail: jan@kowalski.pl\n" +
+				"maxThreads: 4" +
+				"repositoriesFile: ./storage/repos.csv",
 			Configuration{
 				StandardFilePath: "html/footer.go",
 				DefaultKeyPath:   "./.ssh/id_rsa",
@@ -44,6 +48,8 @@ func TestNewConfiguration(t *testing.T) {
 				CommitMessage:    "test(test): test",
 				AuthorName:       "Jan Kowalski",
 				AuthorEmail:      "jan@kowalski.pl",
+				MaxThreads:       4,
+				RepositoriesFile: "./storage/repos.csv",
 			},
 		},
 	}
