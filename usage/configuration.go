@@ -16,6 +16,8 @@ type Configuration struct {
 	CommitMessage    string
 	AuthorName       string
 	AuthorEmail      string
+	MaxThreads       int
+	RepositoriesFile string
 }
 
 func NewConfiguration(source io.Reader) (*Configuration, error) {
@@ -29,6 +31,8 @@ func NewConfiguration(source io.Reader) (*Configuration, error) {
 		CommitMessage    string `yaml:"commitMessage"`
 		AuthorName       string `yaml:"authorName"`
 		AuthorEmail      string `yaml:"authorEmail"`
+		MaxThreads       int    `yaml:"maxThreads"`
+		RepositoriesFile string `yaml:"listRepositoriesFile"`
 	}
 
 	yamlData, err := ioutil.ReadAll(source)
@@ -53,5 +57,7 @@ func NewConfiguration(source io.Reader) (*Configuration, error) {
 		CommitMessage:    yamlConfig.CommitMessage,
 		AuthorName:       yamlConfig.AuthorName,
 		AuthorEmail:      yamlConfig.AuthorEmail,
+		MaxThreads:       yamlConfig.MaxThreads,
+		RepositoriesFile: yamlConfig.RepositoriesFile,
 	}, nil
 }
