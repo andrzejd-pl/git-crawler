@@ -32,7 +32,7 @@ func NewConfiguration(source io.Reader) (*Configuration, error) {
 		AuthorName       string `yaml:"authorName"`
 		AuthorEmail      string `yaml:"authorEmail"`
 		MaxThreads       int    `yaml:"maxThreads"`
-		RepositoriesFile string `yaml:"listRepositoriesFile"`
+		RepositoriesFile string `yaml:"repositoriesFile"`
 	}
 
 	yamlData, err := ioutil.ReadAll(source)
