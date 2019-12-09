@@ -36,8 +36,8 @@ func TestNewConfiguration(t *testing.T) {
 				"commitMessage: \"test(test): test\"\n" +
 				"authorName: Jan Kowalski\n" +
 				"authorEmail: jan@kowalski.pl\n" +
-				"maxThreads: 4" +
-				"repositoriesFile: ./storage/repos.csv",
+				"maxThreads: 4\n" +
+				"repositoriesFile: ./storage/repos.csv\n",
 			Configuration{
 				StandardFilePath: "html/footer.go",
 				DefaultKeyPath:   "./.ssh/id_rsa",
