@@ -15,7 +15,6 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 	"os"
-	"strconv"
 	"sync"
 )
 
@@ -32,13 +31,12 @@ func main() {
 	}
 
 	configurationFile, err := os.Open(fileName)
-
-	configuration, err := usage.NewConfiguration(configurationFile)
-
-	maxThreads, err := strconv.Atoi(os.Args[2])
 	usage.CheckErrorWithPanic(logger, err)
 
-	sitesFile, err := os.Open(os.Args[3])
+	configuration, err = usage.NewConfiguration(configurationFile)
+	usage.CheckErrorWithPanic(logger, err)
+
+	sitesFile, err := os.Open(configuration.RepositoriesFile)
 	usage.CheckErrorWithPanic(logger, err)
 
 	sites, err := csv.ReadSites(sitesFile)
@@ -64,23 +62,24 @@ func main() {
 			usage.CheckErrorWithOnlyLogging(fileError, err)
 
 			if err == nil {
-				_, _ = fileError.WriteString(id + ": ok")
+				_, _ = fileError.WriteString(id + ": ok\n")
 			}
 		}(siteId, urlRepo)
 
-		if threadsNumber%maxThreads == 0 {
-			_, _ = logger.WriteString("wait")
+		if threadsNumber%configuration.MaxThreads == 0 {
+			_, _ = logger.WriteString("wait\n")
 			wg.Wait()
 		}
 	}
 
 	wg.Wait()
-	_, _ = logger.WriteString("ok")
+	_, _ = logger.WriteString("ok\n")
 }
 
 func thread(repo repositories.Repository, logFile *os.File) error {
 	storage := memory.NewStorage()
 	fileSystem := memfs.New()
+	defer fileSystem.Remove(".")
 	err := repo.Download(storage, fileSystem, logFile)
 
 	if err != nil {
